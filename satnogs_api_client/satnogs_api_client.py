@@ -8,6 +8,23 @@ DB_BASE_URL = 'https://db.satnogs.org'
 DB_DEV_BASE_URL = 'https://db-dev.satnogs.org'
 
 
+def get_paginated_endpoint(url):
+    r = requests.get(url=url)
+    r.raise_for_status()
+
+    data = r.json()
+
+    while 'next' in r.links:
+        next_page_url = r.links['next']['url']
+
+        r = requests.get(url=next_page_url)
+        r.raise_for_status()
+
+        data.extend(r.json())
+
+    return data
+
+
 def fetch_observation_data_from_id(norad_id, start, end, prod=True):
     # Get all observations of the satellite with the given `norad_id` in the given timeframe
     # https://network.satnogs.org/api/observations/?satellite__norad_cat_id=25544&start=2018-06-10T00:00&end=2018-06-15T00:00
@@ -19,37 +36,7 @@ def fetch_observation_data_from_id(norad_id, start, end, prod=True):
                            start.isoformat(),
                            end.isoformat())
 
-    # print(url)
-    r = requests.get(url=url)
-
-    if r.status_code != requests.codes.ok:
-        print("No observations found for {}, start: {}, end: {}.".format(norad_id, start_time, end_time))
-        raise
-
-    observations = r.json()
-
-    next_page_available = ('Link' in r.headers.keys())
-
-    if next_page_available:
-        parts = r.headers['Link'].split(',')
-        for part in parts:
-            if part[-5:-1] == 'next':
-                next_page_url = part[1:-13]
-
-    while next_page_available:
-        # print(next_page_url)
-        r = requests.get(url=next_page_url)
-
-        observations.extend(r.json())
-
-        next_page_available = False
-
-        if 'Link' in r.headers.keys():
-            parts = r.headers['Link'].split(',')
-            for part in parts:
-                if part[-5:-1] == 'next':
-                    next_page_url = part[1:-13]
-                    next_page_available = True
+    observations = get_paginated_endpoint(url)
 
     # Current prod is broken and can't filter on NORAD ID correctly, use client-side filtering instead
     observations = list(filter(lambda o: o['norad_cat_id'] == norad_id, observations))
@@ -120,38 +107,7 @@ def fetch_telemetry(norad_id, max_frames, url):
 
     url = query_str.format(url, norad_id)
 
-    print(url)
-    r = requests.get(url=url)
-
-    if r.status_code != requests.codes.ok:
-        print("No telemetry found for {}.".format(norad_id))
-        raise
-
-    telemetry = r.json()
-
-    next_page_available = ('Link' in r.headers.keys())
-
-    if next_page_available and (not max_frames or len(telemetry) < max_frames):
-        parts = r.headers['Link'].split(',')
-        for part in parts:
-            if part[-5:-1] == 'next':
-                next_page_url = part[1:-13]
-
-    while next_page_available and (not max_frames or len(telemetry) < max_frames):
-        print(next_page_url)
-        r = requests.get(url=next_page_url)
-
-        telemetry.extend(r.json())
-
-        next_page_available = False
-
-        if 'Link' in r.headers.keys():
-            parts = r.headers['Link'].split(',')
-            for part in parts:
-                if part[-5:-1] == 'next':
-                    next_page_url = part[1:-13]
-                    next_page_available = True
-
+    telemetry = get_paginated_endpoint(url)
 
     return telemetry
 
