@@ -112,6 +112,17 @@ def fetch_telemetry(norad_id, max_frames, url):
     return telemetry
 
 
+def fetch_transmitters(norad_id, url):
+    # http://db-dev.satnogs.org/api/transmitters/?satellite__norad_cat_id=25544
+
+    query_str = '{}/api/transmitters/?satellite__norad_cat_id={}'
+
+    url = query_str.format(url, norad_id)
+
+    transmitters = get_paginated_endpoint(url)
+    return transmitters
+
+
 def post_telemetry(norad_id,
                    source, # Receiver Callsign
                    lon,
