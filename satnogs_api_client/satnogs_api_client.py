@@ -58,9 +58,7 @@ def fetch_observation_data(observation_ids, prod=True):
         base_url = (NETWORK_BASE_URL if prod else NETWORK_DEV_BASE_URL)
         r = requests.get(url='{}/api/observations/{}/'.format(base_url,
                                                               observation_id))
-        if r.status_code != requests.codes.ok:
-            print("Observation {} not found in network.".format(observation_id))
-            continue
+        r.raise_for_status()
         observations.append(r.json())
 
     return observations
@@ -78,19 +76,17 @@ def fetch_ground_station_data(ground_station_ids, prod=True):
         base_url = (NETWORK_BASE_URL if prod else NETWORK_DEV_BASE_URL)
         r = requests.get(url='{}/api/stations/{}/'.format(base_url,
                                                           ground_station_id))
+        r.raise_for_status()
 
-        if r.status_code != requests.codes.ok:
-            print("Ground Station {} not found in db.".format(ground_station_id))
-            raise
         ground_stations.append(r.json())
     return ground_stations
 
 
 def fetch_satellite_data(norad_cat_id):
     # Fetch satellite metadata from network
-    r = requests.get(url='{}/api/satellites/{}/'.format(DB_BASE_URL, norad_cat_id))
-    if r.status_code != requests.codes.ok:
-        print("ERROR: Satellite {} not found in network.".format(norad_cat_id))
+    r = requests.get(url='{}/api/satellites/{}/'.format(DB_BASE_URL,
+                                                        norad_cat_id))
+    r.raise_for_status()
 
     return r.json()
 
