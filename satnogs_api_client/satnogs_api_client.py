@@ -130,6 +130,14 @@ def fetch_transmitters(norad_id, url):
     return transmitters
 
 
+def fetch_satellites(max_entries, url):
+    query_str = '{}/api/satellites/'
+    url = query_str.format(url)
+
+    satellites = get_paginated_endpoint(url, max_entries=max_entries)
+    return satellites
+
+
 def post_telemetry(norad_id,
                    source,  # Receiver Callsign
                    lon,

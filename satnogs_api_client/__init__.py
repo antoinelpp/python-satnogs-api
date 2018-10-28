@@ -12,6 +12,7 @@ from .satnogs_api_client import fetch_observation_data_from_id, \
                                 fetch_tle_of_observation, \
                                 fetch_telemetry, \
                                 fetch_transmitters, \
+                                fetch_satellites, \
                                 post_telemetry
 
 __version__ = get_versions()['version']
