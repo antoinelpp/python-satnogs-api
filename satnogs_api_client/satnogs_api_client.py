@@ -10,13 +10,13 @@ DB_BASE_URL = 'https://db.satnogs.org'
 DB_DEV_BASE_URL = 'https://db-dev.satnogs.org'
 
 
-def get_paginated_endpoint(url):
+def get_paginated_endpoint(url, max_entries=None):
     r = requests.get(url=url)
     r.raise_for_status()
 
     data = r.json()
 
-    while 'next' in r.links:
+    while 'next' in r.links and (not max_entries or len(data) < max_entries):
         next_page_url = r.links['next']['url']
 
         r = requests.get(url=next_page_url)
